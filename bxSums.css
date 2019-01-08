@@ -1,0 +1,42 @@
+.customBxSums {
+    clear: both;
+    width: 232px;
+    list-style: none;
+    float: left;
+    color: #333;
+    margin: 1px 0 5px 0;
+    flex-direction: column;
+    padding: 3px 5px 3px 12px;
+    font-size: 13px;
+    background: #fff;
+    box-sizing: border-box;
+    border-left: 3px solid #d90020;
+    z-index: 9;
+    border-radius: 2px;
+}
+
+.customBxSums > li.totals {
+    line-height: 20px;
+    font-weight: bold;
+    border-top: 1px solid #D7D9DE;
+    padding: 5px 0 0 0;
+
+}
+.customBxSums > li.totals svg {
+    width: 20px;
+    height: 20px
+}
+
+.customBxSums > li > div {
+    float: left;
+}
+
+.customBxSums > li > div:first-child {
+    cursor: default !important;
+    margin: 0 7px 0 0;
+}
+
+.customBxSums > li.uSum {
+    line-height: 20px;
+    margin: 5px 0;
+}
