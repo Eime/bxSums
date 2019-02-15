@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      1.0
+// @version      1.1
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -24,6 +24,13 @@
 
         window.setInterval(calcEstimations, 50000);
     }
+
+    // Beim Klick auf den Titel einer Liste werden alle Karten darin in neuen Tabs geoeffnet
+    myJQuery(".main-kanban-column-title-info").dblclick(function () {
+        myJQuery(this).parents(".main-kanban-column").find(".tasks-kanban-item-title").each(function () {
+            window.open(myJQuery(this).attr("href"), "_blank");
+        });
+    });
 })();
 
 function calcEstimations() {
