@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      1.2
+// @version      1.3
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -116,7 +116,7 @@ function formatTime (totalSeconds) {
         minutes = Math.abs(Math.floor(totSeconds / 60) / 6 * 10),
         seconds = totSeconds % 60;
 
-    return (hours + "," + minutes + "h").replace(",0", "");
+    return (hours + "," + Math.round(minutes, 2) + "h").replace(",0", "");
 }
 
 function timeStrToSeconds (timeStr) {
