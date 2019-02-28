@@ -13,6 +13,11 @@
     border-left: 3px solid #d90020;
     z-index: 9;
     border-radius: 2px;
+    user-select: none;
+}
+
+.customBxSums > li {
+    cursor: pointer;
 }
 
 .customBxSums > li.totals {
@@ -29,14 +34,30 @@
 
 .customBxSums > li > div {
     float: left;
+    position: relative;
+    z-index: 2;
 }
 
 .customBxSums > li > div:first-child {
-    cursor: default !important;
     margin: 0 7px 0 0;
 }
 
 .customBxSums > li.uSum {
     line-height: 20px;
     margin: 5px 0;
+    transition: padding 0.1s ease-in;
+}
+
+.customBxSums > li.uSum.filtered {
+    padding-left: 16px;
+    font-weight: bold;
+}
+
+.customBxSums > li.uSum.filtered:after {
+    content: "»";
+    position: absolute;
+    left: 20px;
+    font-weight: bold;
+    font-size: 17px;
+    z-index: 1;
 }
