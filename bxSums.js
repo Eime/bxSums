@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      1.7
+// @version      1.8
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -70,7 +70,6 @@ function scrollToEnd($col, lastNum) {
     var
         numItems = $col.find(".main-kanban-item").length;
 
-    // Todo... evtl. falsch
     if (numItems === 20 || lastNum !== numItems) {
         $col.scrollTop(500000);
         _.delay(function () {
