@@ -1,4 +1,5 @@
 .customBxSums {
+    display: flex;
     clear: both;
     width: 232px;
     list-style: none;
@@ -6,11 +7,11 @@
     color: #333;
     margin: 1px 0 5px 0;
     flex-direction: column;
-    padding: 3px 5px 3px 12px;
+    padding: 3px 5px 3px 5px;
     font-size: 13px;
     background: #fff;
     box-sizing: border-box;
-    border-left: 3px solid #d90020;
+    border-left: 3px solid #00cad4;
     z-index: 9;
     border-radius: 2px;
     -webkit-user-select: none;
@@ -21,13 +22,14 @@
 
 .customBxSums > li {
     cursor: pointer;
+    padding-left: 7px;
 }
 
 .customBxSums > li.totals {
     line-height: 20px;
-    font-weight: bold;
     border-top: 1px solid #D7D9DE;
-    padding: 5px 0 0 0;
+    font-family: "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+    padding: 5px 0 0 7px;
 
 }
 .customBxSums > li.totals svg {
