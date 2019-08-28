@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      1.8
+// @version      1.9
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -215,10 +215,8 @@ function filterResponsible ($li) {
             !newFilter || responsible === myJQuery(this).find(".tasks-kanban-item-responsible .tasks-kanban-item-author-avatar").attr("title")
         );
     });
-    myJQuery(".customBxSums li", $column).removeClass("filtered");
-    if (newFilter) {
-        $li.addClass("filtered");
-    }
+    $column.find(".customBxSums li").removeClass("filtered");
+    $li.toggleClass("filtered", !!newFilter);
     $column.attr("rel", newFilter);
 }
 
