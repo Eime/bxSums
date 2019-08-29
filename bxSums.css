@@ -1,7 +1,7 @@
 .customBxSums {
     display: flex;
     clear: both;
-    width: 232px;
+    width: calc(100% - 2px);
     list-style: none;
     float: left;
     color: #333;
