@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.0
+// @version      2.1
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -36,14 +36,8 @@
 
                   // Im Sichtbereich?
                   if (!$parent.hasClass("calculated") && left > ($this.width() * -1) && left < $container.width()) {
-                      calculate($this, $this.attr("data-id"));
+                      calculate($this, $this.attr("data-id"), true);
                       $parent.addClass("calculated");
-
-                      if (stageId) {
-                          $this.on("DOMSubtreeModified", _.debounce(function () {
-                              calculate($this, stageId);
-                          }, 100));
-                      }
                   }
 
                   if (numItems === 20) {
@@ -80,11 +74,12 @@ function scrollToEnd($col, lastNum) {
     }
 }
 
-function calculate($list, stageId) {
+function calculate($list, stageId, addEventHandler) {
     var
         $parent = $list.parent(),
         $bxSums = $parent.find(".customBxSums"),
-        tasks = Kanban.columns[stageId].items,
+        column = Kanban.columns[stageId],
+        tasks = column.items,
         estimations = {},
         spent = {},
         rest = {},
@@ -92,6 +87,12 @@ function calculate($list, stageId) {
         totalRest = 0,
         totalSpent = 0,
         totalEstimated = 0;
+
+    if (addEventHandler) {
+        BX.addCustomEvent(column, "Kanban.Column:render", function () {
+            calculate($list, stageId);
+        });
+    }
 
     if (!tasks || !tasks.length) {
         $bxSums.detach();
