@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.1
+// @version      2.2
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
