@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.3
+// @version      2.4
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -26,23 +26,23 @@
           calculateVisibles = function () {
               myJQuery(".main-kanban-column-body").not(".calculated").each(function () {
                   var
-                    numItems = myJQuery(this).find(".main-kanban-item").length;
-
-                  var
-                      $this = myJQuery(this),
-                      $parent = $this.parent(),
-                      left = $parent.position().left,
-                      stageId = $this.attr("data-id");
+                    $this = myJQuery(this),
+                    numItems = $this.find(".main-kanban-item").length,
+                    $parent = $this.parent(),
+                    left = $parent.position().left,
+                    stageId = $this.attr("data-id");
 
                   // Im Sichtbereich?
-                  if (!$parent.hasClass("calculated") && left > ($this.width() * -1) && left < $container.width()) {
+                  if (!$this.hasClass("calculated") && left > ($this.width() * -1) && left < $container.width()) {
                       calculate($this, $this.attr("data-id"), true);
-                      $parent.addClass("calculated");
+                      $this.addClass("calculated");
+
+                      if (numItems === 20) {
+                        scrollToEnd($this);
+                      }
                   }
 
-                  if (numItems === 20) {
-                      scrollToEnd($this);
-                  }
+                  
               });
               return this;
           };
