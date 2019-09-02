@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.4
+// @version      2.5
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -18,38 +18,10 @@
 
     if (myJQuery(".main-kanban-column").length) {
         myJQuery("head").append(
-            '<link href="https://eime.github.io/bxSums/bxSums.css" rel="stylesheet" type="text/css">'
+            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSums.css" rel="stylesheet" type="text/css">'
         );
 
-        var
-          $container = myJQuery(".main-kanban-grid"),
-          calculateVisibles = function () {
-              myJQuery(".main-kanban-column-body").not(".calculated").each(function () {
-                  var
-                    $this = myJQuery(this),
-                    numItems = $this.find(".main-kanban-item").length,
-                    $parent = $this.parent(),
-                    left = $parent.position().left,
-                    stageId = $this.attr("data-id");
-
-                  // Im Sichtbereich?
-                  if (!$this.hasClass("calculated") && left > ($this.width() * -1) && left < $container.width()) {
-                      calculate($this, $this.attr("data-id"), true);
-                      $this.addClass("calculated");
-
-                      if (numItems === 20) {
-                        scrollToEnd($this);
-                      }
-                  }
-
-                  
-              });
-              return this;
-          };
-
-        calculateVisibles();
-
-        $container.bind("scroll", calculateVisibles);
+        bxSumsInit();
     }
 
     // Beim Klick auf den Titel einer Liste werden alle Karten darin in neuen Tabs geoeffnet
@@ -59,6 +31,46 @@
         });
     });
 })();
+
+function bxSumsInit() {
+    if (!cssLoaded()) {
+        window.setTimeout(bxSumsInit, 200);
+    } else {
+        onCssLoaded();
+    }
+}
+
+function onCssLoaded() {
+    var
+        $container = myJQuery(".main-kanban-grid");
+
+    calculateVisibles();
+
+    $container.bind("scroll", calculateVisibles);
+}
+
+function calculateVisibles() {
+    var
+        $container = myJQuery(".main-kanban-grid");
+
+    myJQuery(".main-kanban-column-body").not(".calculated").each(function () {
+        var
+            $this = myJQuery(this),
+            numItems = $this.find(".main-kanban-item").length,
+            $parent = $this.parent(),
+            left = $parent.position().left;
+
+        // Im Sichtbereich?
+        if (!$this.hasClass("calculated") && left > ($this.width() * -1) && left < $container.width()) {
+            calculate($this, $this.attr("data-id"), true);
+            $this.addClass("calculated");
+
+            if (numItems === 20) {
+            scrollToEnd($this);
+            }
+        }
+    });
+}
 
 function calculate($list, stageId, addEventHandler) {
     var
@@ -212,6 +224,12 @@ function filterResponsible ($li) {
     $column.attr("rel", newFilter);
 }
 
+function cssLoaded() {
+    if (!myJQuery("#bxSumsLink").length) {
+        return false;
+    }
+    return Boolean(myJQuery("#bxSumsLink").get(0).sheet);
+}
 
 function formatTime (totalSeconds) {
     var
