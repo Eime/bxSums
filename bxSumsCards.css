@@ -1,0 +1,104 @@
+.customBxSums {
+    position: relative;
+    display: flex;
+    clear: both;
+    width: calc(100% - 22px);
+    list-style: none;
+    float: left;
+    color: #333;
+    margin: 1px 0 5px 12px;
+    flex-direction: column;
+    padding: 0;
+    font-size: 13px;
+    background: #fff;
+    box-sizing: border-box;
+    /* border-left: 3px solid #00cad4; */
+    z-index: 9;
+    border-radius: 2px 2px 2px 0;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.customBxSums > li {
+    cursor: pointer;
+    padding-left: 7px;
+}
+
+.customBxSums > li.totals {
+    line-height: 20px;
+    /* border-top: 1px solid #D7D9DE; */
+    font-family: "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+    padding: 5px 0 0 7px;
+}
+.customBxSums > li.totals svg {
+    width: 20px;
+    height: 20px
+}
+
+.customBxSums > li > div {
+    float: left;
+    position: relative;
+    z-index: 2;
+}
+
+.customBxSums > li > div:first-child {
+    margin: 0 7px 0 0;
+}
+
+.customBxSums > li.uSum {
+    line-height: 20px;
+    margin: 5px 0;
+    transition: padding 0.1s ease-in;
+}
+
+.customBxSums > li.uSum.filtered {
+    padding-left: 22px;
+    font-weight: bold;
+}
+
+.customBxSums > li.uSum.filtered:after {
+    content: "»";
+    position: absolute;
+    left: 10px;
+    font-weight: bold;
+    font-size: 17px;
+    z-index: 1;
+}
+
+ul.customBxSums .triangle {
+    position: absolute;
+    left: -8px;
+    filter: contrast(0.3);
+    width: 0;
+    bottom: 30px;
+    border-top: 10px solid transparent;
+    border-left: 0px solid transparent;
+}
+
+ul.customBxSums .band {
+    position: absolute;
+    left: -8px;
+    bottom: 0;
+    height: 30px;
+    width: 8px;
+}
+
+ul.customBxSums .triangleR {
+    position: absolute;
+    right: -8px;
+    filter: contrast(0.3);
+    width: 0;
+    bottom: 30px;
+    border-top: 10px solid transparent;
+    border-right: 0px solid transparent;
+}
+
+ul.customBxSums .bandR {
+    position: absolute;
+    right: -8px;
+    bottom: 0;
+    height: 30px;
+    width: 8px;
+}
