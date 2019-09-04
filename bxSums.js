@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.5
+// @version      2.6
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -18,7 +18,7 @@
 
     if (myJQuery(".main-kanban-column").length) {
         myJQuery("head").append(
-            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSums.css" rel="stylesheet" type="text/css">'
+            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css" rel="stylesheet" type="text/css">'
         );
 
         bxSumsInit();
@@ -76,6 +76,8 @@ function calculate($list, stageId, addEventHandler) {
     var
         $parent = $list.parent(),
         $bxSums = $parent.find(".customBxSums"),
+        titleBg = $parent.find(".main-kanban-column-title-bg").css("background-color"),
+        titleColor = $parent.find(".main-kanban-column-title-text-inner").css("color"),
         column = Kanban.columns[stageId],
         tasks = column.items,
         estimations = {},
@@ -85,6 +87,8 @@ function calculate($list, stageId, addEventHandler) {
         totalRest = 0,
         totalSpent = 0,
         totalEstimated = 0;
+
+    //titleBg = titleBg.replace('rgb', 'rgba').replace(')', ', 0.9)');
 
     if (addEventHandler) {
         BX.addCustomEvent(column, "Kanban.Column:render", function () {
@@ -184,14 +188,17 @@ function calculate($list, stageId, addEventHandler) {
         }
 
         if (totalEstimated > 0) {
+            console.log(titleColor);
             myJQuery("<li>")
                 .addClass("totals")
+                .css("background-color", titleBg)
+                .css("color", titleColor)
                 .bind("click", function () {
                     filterResponsible(myJQuery(this), null);
                 })
             .append(
                 myJQuery("<div>")
-                .html('<svg viewBox="0 0 24 24"><path fill="#000000" d="M12,6A3,3 0 0,0 9,9A3,3 0 0,0 12,12A3,3 0 0,0 15,9A3,3 0 0,0 12,6M6,8.17A2.5,2.5 0 0,0 3.5,10.67A2.5,2.5 0 0,0 6,13.17C6.88,13.17 7.65,12.71 8.09,12.03C7.42,11.18 7,10.15 7,9C7,8.8 7,8.6 7.04,8.4C6.72,8.25 6.37,8.17 6,8.17M18,8.17C17.63,8.17 17.28,8.25 16.96,8.4C17,8.6 17,8.8 17,9C17,10.15 16.58,11.18 15.91,12.03C16.35,12.71 17.12,13.17 18,13.17A2.5,2.5 0 0,0 20.5,10.67A2.5,2.5 0 0,0 18,8.17M12,14C10,14 6,15 6,17V19H18V17C18,15 14,14 12,14M4.67,14.97C3,15.26 1,16.04 1,17.33V19H4V17C4,16.22 4.29,15.53 4.67,14.97M19.33,14.97C19.71,15.53 20,16.22 20,17V19H23V17.33C23,16.04 21,15.26 19.33,14.97Z" /></svg>')
+                .html('<svg viewBox="0 0 24 24"><path fill="' + titleColor + '" d="M12,6A3,3 0 0,0 9,9A3,3 0 0,0 12,12A3,3 0 0,0 15,9A3,3 0 0,0 12,6M6,8.17A2.5,2.5 0 0,0 3.5,10.67A2.5,2.5 0 0,0 6,13.17C6.88,13.17 7.65,12.71 8.09,12.03C7.42,11.18 7,10.15 7,9C7,8.8 7,8.6 7.04,8.4C6.72,8.25 6.37,8.17 6,8.17M18,8.17C17.63,8.17 17.28,8.25 16.96,8.4C17,8.6 17,8.8 17,9C17,10.15 16.58,11.18 15.91,12.03C16.35,12.71 17.12,13.17 18,13.17A2.5,2.5 0 0,0 20.5,10.67A2.5,2.5 0 0,0 18,8.17M12,14C10,14 6,15 6,17V19H18V17C18,15 14,14 12,14M4.67,14.97C3,15.26 1,16.04 1,17.33V19H4V17C4,16.22 4.29,15.53 4.67,14.97M19.33,14.97C19.71,15.53 20,16.22 20,17V19H23V17.33C23,16.04 21,15.26 19.33,14.97Z" /></svg>')
                 ).append(
                 myJQuery("<div>").text(
                     formatTime(totalSpent) + " / " +
@@ -199,6 +206,10 @@ function calculate($list, stageId, addEventHandler) {
                     + (totalRest ? " (Rest: " + formatTime(totalRest) + ")" : "")
                 )
             ).appendTo($bxSums);
+            myJQuery("<div>").addClass("triangle").css("border-right", "8px solid " + titleBg).appendTo($bxSums);
+            myJQuery("<div>").addClass("band").css("background-color", titleBg).appendTo($bxSums);
+            myJQuery("<div>").addClass("triangleR").css("border-left", "8px solid " + titleBg).appendTo($bxSums);
+            myJQuery("<div>").addClass("bandR").css("background-color", titleBg).appendTo($bxSums);
             $bxSums.show();
         }
     }
