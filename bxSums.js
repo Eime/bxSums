@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.6
+// @version      2.7
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -110,7 +110,7 @@ function calculate($list, stageId, addEventHandler) {
             var
                 task = tasks[i],
                 data = task.data,
-                responsibleId = data.responsible.id,
+                responsibleId = data.responsible && data.responsible.id || "",
                 curSpent = parseInt(data.time_logs || 0),
                 estimated = parseInt(data.time_estimate || 0),
                 curRest = 0,
@@ -157,7 +157,7 @@ function calculate($list, stageId, addEventHandler) {
 
         for (var id in responsibles) {
             var
-                r = responsibles[id],
+                r = responsibles[id] || {},
                 name = r.name,
                 icon = r.photo && r.photo.src;
 
