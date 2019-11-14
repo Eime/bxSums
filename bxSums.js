@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.7
+// @version      2.8
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -25,12 +25,41 @@
     }
 
     // Beim Klick auf den Titel einer Liste werden alle Karten darin in neuen Tabs geoeffnet
-    myJQuery(".main-kanban-column-title-info").attr("title", "\u24d8 Doppelklick um alle Karten in neuen Tabs zu öffnen.").dblclick(function () {
+    myJQuery(".main-kanban-column-title-info").attr("title", "\u24d8 Doppelklick um alle Karten in neuen Tabs zu öffnen.").dblclick(function (event) {
+        var
+            urls = [];
+
         myJQuery(this).parents(".main-kanban-column").find(".tasks-kanban-item-title").each(function () {
-            window.open(myJQuery(this).attr("href"), "_blank");
+            urls.push(window.location.origin + myJQuery(this).attr("href"));
         });
+
+        if (!urls.length) {
+            return alert("Die Spalte enthaelt keine Karten...");
+        }
+
+        if (event.shiftKey) {
+            copyToClipboard(urls.join("\n"));
+        } else {
+            for (var i = 0; i < urls.length; i++) {
+                window.open(urls[i], "_blank");
+            }
+        }
     });
 })();
+
+function copyToClipboard(str) {
+    var $cpTextarea = $("<textarea>")
+        .attr("id", "copyTmpTextarea")
+        .css({
+            position: 'absolute',
+            left: '-99999px'
+        })
+        .appendTo(document.body);
+    $cpTextarea.val(str).get(0).select();
+    document.execCommand("copy");
+    alert("Folgender Text wurde in die Zwischenablage kopiert: \n" + str);
+    $cpTextarea.detach();
+}
 
 function bxSumsInit() {
     if (!cssLoaded()) {
@@ -188,7 +217,6 @@ function calculate($list, stageId, addEventHandler) {
         }
 
         if (totalEstimated > 0) {
-            console.log(titleColor);
             myJQuery("<li>")
                 .addClass("totals")
                 .css("background-color", titleBg)
