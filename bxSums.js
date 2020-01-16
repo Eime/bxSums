@@ -142,8 +142,7 @@ function calculate($list, stageId, addEventHandler) {
                 responsibleId = data.responsible && data.responsible.id || "",
                 curSpent = parseInt(data.time_logs || 0),
                 estimated = parseInt(data.time_estimate || 0),
-                curRest = 0,
-                foundTag = false,
+                curRest = estimated,
                 tags = data.tags;
 
             responsibles[responsibleId] = data.responsible;
@@ -165,14 +164,9 @@ function calculate($list, stageId, addEventHandler) {
                     var
                         match = tag.match(/^Rest.*?([\d.,]+)\s*?$/);
                     if (match && match.length > 1) {
-                        foundTag = true;
                         curRest = timeStrToSeconds(match[1]);
                     }
                 });
-            }
-
-            if (!foundTag) {
-                curRest = curSpent > 0 ? 0 : estimated;
             }
 
             spent[responsibleId] += curSpent;
