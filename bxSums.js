@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.8
+// @version      2.10
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -283,9 +283,9 @@ function timeStrToSeconds (timeStr) {
 
     if (splitted.length === 1) {
         return parseInt(splitted[0]) * 3600;
-    } else if (splitted.length === 1) {
+    } else if (splitted.length === 2 && parseInt(splitted[1]) > 0) {
         return parseInt(splitted[0]) * 3600
-            + parseInt(splitted[1]) * 60;
+            + 60 / 10 * parseInt(splitted[1]) * 60;
     }
 
     return 0;
