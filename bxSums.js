@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.10
+// @version      2.11
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -85,18 +85,15 @@ function calculateVisibles() {
     myJQuery(".main-kanban-column-body").not(".calculated").each(function () {
         var
             $this = myJQuery(this),
-            numItems = $this.find(".main-kanban-item").length,
             $parent = $this.parent(),
             left = $parent.position().left;
 
         // Im Sichtbereich?
         if (!$this.hasClass("calculated") && left > ($this.width() * -1) && left < $container.width()) {
-            calculate($this, $this.attr("data-id"), true);
+            var stageId = $this.attr("data-id");
+            calculate($this, stageId, true);
             $this.addClass("calculated");
-
-            if (numItems === 20) {
-            scrollToEnd($this);
-            }
+            loadAllItems($this, Kanban.columns[stageId]);
         }
     });
 }
@@ -120,7 +117,7 @@ function calculate($list, stageId, addEventHandler) {
     //titleBg = titleBg.replace('rgb', 'rgba').replace(')', ', 0.9)');
 
     if (addEventHandler) {
-        BX.addCustomEvent(column, "Kanban.Column:render", function () {
+        BX.addCustomEvent(column.grid, "Kanban.Column:render", function () {
             calculate($list, stageId);
         });
     }
@@ -291,15 +288,12 @@ function timeStrToSeconds (timeStr) {
     return 0;
 }
 
-function scrollToEnd($col, lastNum) {
-    var
-        numItems = $col.find(".main-kanban-item").length;
-
-    if ((numItems === 20 && !lastNum) || lastNum !== numItems) {
+function loadAllItems($col, column) {
+    if (column.hasLoading()) {
         $col.scrollTop(500000);
         _.delay(function () {
-            scrollToEnd($col, numItems);
-        }, 500);
+            loadAllItems($col, column);
+        }, 100);
     } else {
         $col.scrollTop(0);
     }
