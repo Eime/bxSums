@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.11
+// @version      2.12
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -10,6 +10,10 @@
 // @require https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js
 // @require https://underscorejs.org/underscore-min.js
 // ==/UserScript==
+
+var
+    loadingPagesCount = {},
+    maxLoadingSecondsPerColumn = 4;
 
 (function() {
     'use strict';
@@ -289,12 +293,28 @@ function timeStrToSeconds (timeStr) {
 }
 
 function loadAllItems($col, column) {
+    var
+      pagination = column.getPagination(),
+      columnId = column.id;
+
+    // Wenn sich die Anzahl der Items nach maxLoadingSecondsPerColumn nicht veraendert, gehen wir davon aus dass es keine weiteren Items mehr zu laden gibt...
+    if (loadingPagesCount[columnId] && (Date.now() / 1000) - loadingPagesCount[columnId].start > maxLoadingSecondsPerColumn && column.getItemsCount() === loadingPagesCount[columnId].items) {
+        return;
+    }
+
     if (column.hasLoading()) {
-        $col.scrollTop(500000);
+        if (!pagination.loadingInProgress) {
+            if (!loadingPagesCount[columnId]) {
+                loadingPagesCount[columnId] = {
+                    start: Date.now() / 1000,
+                    items: column.getItemsCount()
+                };
+            }
+            pagination.loadItems();
+        }
+
         _.delay(function () {
             loadAllItems($col, column);
         }, 100);
-    } else {
-        $col.scrollTop(0);
     }
 }

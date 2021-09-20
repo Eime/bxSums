@@ -24,6 +24,8 @@
 .customBxSums > li {
     cursor: pointer;
     padding-left: 7px;
+    display: flex;
+    font-size: 12px;
 }
 
 .customBxSums > li.totals {
