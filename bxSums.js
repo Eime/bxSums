@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.14
+// @version      2.15
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -32,9 +32,11 @@ var
 
     if (_$(".main-kanban-column").length) {
         _$("head").append(
-            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?4" rel="stylesheet" type="text/css">'
+            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?5" rel="stylesheet" type="text/css">'
         );
     }
+
+    handleTags();
 
     // Beim Klick auf den Titel einer Liste werden alle Karten darin in neuen Tabs geoeffnet
     _$(".main-kanban-column-title-info").attr("title", "\u24d8 Doppelklick um alle Karten in neuen Tabs zu öffnen.").dblclick(function (event) {
@@ -62,6 +64,12 @@ var
     setMenuItems();
     useSettings();
 })();
+
+function handleTags() {
+    _$(".main-kanban-column").find(".tasks-kanban-item-title").each(function () {
+        _$(this).html(_$(this).html().replace(/(?<!>)\[([^\]]+)\]/g, (x, match) => `<span class="${match.toLowerCase()}">[${match}]</span>`));
+    });
+}
 
 function setMenuItems() {
     const
@@ -149,6 +157,7 @@ function useSettings() {
 }
 
 function prepareColumns() {
+    handleTags();
     _$(".main-kanban-column-title-text-inner").each((idx, title) => {
         const $col = _$(title).parents(".main-kanban-column");
 
