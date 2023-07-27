@@ -242,6 +242,11 @@ ul.customBxSums .bandR {
     user-select: none;
 }
 
+.bsTags {
+    margin-top: -15px;
+    margin-right: -50px;
+}
+
 .bsTags > span {
     background-color: #444;
     display: inline-block;
