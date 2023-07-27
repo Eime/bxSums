@@ -205,3 +205,31 @@
 .menu-popup-item-text {
     user-select: none;
 }
+
+.bsTags {
+    margin-top: -15px;
+    margin-right: -50px;
+}
+
+.bsTags > span {
+    background-color: #444;
+    display: inline-block;
+    text-align: center;
+    width: auto;
+    min-width: 37px;
+    margin-right: 4px;
+    padding: 3px 4px 4px 4px;
+    border-radius: 3px;
+    color: #ffffff;
+    box-shadow: 0px 2px 3px 1px rgba(0,0,0,0.1);
+    margin-bottom: 2px;
+}
+
+.bsTags > span.bug {
+    background-color: #cf0303;
+}
+
+.bsTags > span.cr {
+    background-color: #7ab418;
+    min-width: 30px;
+}
