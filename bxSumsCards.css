@@ -261,7 +261,7 @@ ul.customBxSums .bandR {
     margin-bottom: 2px;
 }
 
-.bsTags > span:before {
+.bsTags > span:before, .bsTags > span:after  {
     display: none !important;
 }
 
