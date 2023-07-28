@@ -252,13 +252,14 @@ ul.customBxSums .bandR {
     display: inline-block;
     text-align: center;
     width: auto;
-    min-width: 37px;
-    margin-right: 4px;
-    padding: 3px 4px 4px 4px;
-    border-radius: 3px;
+    min-width: 32px;
+    margin-right: 3px;
+    padding: 2px 3px 3px 3px;
+    border-radius: 4px;
     color: #ffffff;
     box-shadow: 0px 2px 3px 1px rgba(0,0,0,0.1);
     margin-bottom: 2px;
+    font-size: 12px;
 }
 
 .bsTags > span:before, .bsTags > span:after  {
@@ -271,5 +272,5 @@ ul.customBxSums .bandR {
 
 .bsTags > span.cr {
     background-color: #7ab418;
-    min-width: 30px;
+    min-width: 27px;
 }
