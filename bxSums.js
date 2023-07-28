@@ -32,7 +32,7 @@ var
 
     if (_$(".main-kanban-column").length) {
         _$("head").append(
-            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?7" rel="stylesheet" type="text/css">'
+            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?18" rel="stylesheet" type="text/css">'
         );
     }
 
