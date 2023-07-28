@@ -261,6 +261,10 @@ ul.customBxSums .bandR {
     margin-bottom: 2px;
 }
 
+.bsTags > span:before {
+    display: none !important;
+}
+
 .bsTags > span.bug {
     background-color: #cf0303;
 }
