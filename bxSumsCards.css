@@ -274,3 +274,7 @@ ul.customBxSums .bandR {
     background-color: #7ab418;
     min-width: 27px;
 }
+
+.bsTags > span.info {
+    background-color: #d700ca;
+}
