@@ -278,3 +278,7 @@ ul.customBxSums .bandR {
 .bsTags > span.info {
     background-color: #d700ca;
 }
+
+.bsTags > span.cloud {
+    background-color: #187eb4;
+}
