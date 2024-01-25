@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.19
+// @version      2.20
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -30,9 +30,9 @@ var
         window.localStorage.setItem("showMode", '1');
     }
 
-    if (_$(".main-kanban-column").length) {
+    if (_$(".main-kanban-column").length || _$(".bx-bizproc-table-body").length) {
         _$("head").append(
-            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?19" rel="stylesheet" type="text/css">'
+            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?20" rel="stylesheet" type="text/css">'
         );
     }
 
@@ -67,6 +67,26 @@ var
 
 function handleTags() {
     _$(".main-kanban-column").find(".tasks-kanban-item-title").each(function () {
+        const
+          $el = _$(this),
+          tags = extractValuesInBrackets($el.text());
+
+
+        if (!tags.length || $el.find(".bsTags").length) {
+            return;
+        }
+
+        const
+          $tags = _$("<div>").addClass("bsTags");
+
+        for (const tag of tags) {
+            $tags.append(_$("<span>").addClass(tag.toLowerCase()).text(tag));
+            $el.html($el.html().replace("[" + tag + "]", ""));
+        }
+        $tags.prependTo($el);
+    });
+
+    _$(".bx-bizproc-table-body").find("a").each(function () {
         const
           $el = _$(this),
           tags = extractValuesInBrackets($el.text());

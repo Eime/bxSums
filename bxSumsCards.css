@@ -247,6 +247,10 @@ ul.customBxSums .bandR {
     margin-right: -50px;
 }
 
+.bx-bizproc-table-body .bsTags {
+    margin-top: 0;
+}
+
 .bsTags > span {
     background-color: #444;
     display: inline-block;
