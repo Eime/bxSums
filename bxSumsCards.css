@@ -258,12 +258,13 @@ ul.customBxSums .bandR {
     width: auto;
     min-width: 32px;
     margin-right: 3px;
-    padding: 2px 3px 3px 3px;
+    padding: 2px 4px 3px 4px;
     border-radius: 4px;
     color: #ffffff;
     box-shadow: 0px 2px 3px 1px rgba(0,0,0,0.1);
     margin-bottom: 2px;
     font-size: 12px;
+    text-transform: uppercase;
 }
 
 .bsTags > span:before, .bsTags > span:after  {
@@ -277,6 +278,18 @@ ul.customBxSums .bandR {
 .bsTags > span.cr {
     background-color: #7ab418;
     min-width: 27px;
+}
+
+.bsTags > span.anforderung {
+    background-color: #7ab418;
+}
+
+.bsTags > span.verbesserung {
+    background-color: #12b98f;
+}
+
+.bsTags > span.optimierung {
+    background-color: #128aca;
 }
 
 .bsTags > span.info {
