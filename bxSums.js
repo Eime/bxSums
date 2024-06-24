@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.21
+// @version      2.22
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -234,7 +234,7 @@ function prepareColumns() {
 }
 
 function copyToClipboard(str) {
-    var $cpTextarea = $("<textarea>")
+    var $cpTextarea = _$("<textarea>")
         .attr("id", "copyTmpTextarea")
         .css({
             position: 'absolute',
