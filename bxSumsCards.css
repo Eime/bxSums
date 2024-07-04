@@ -247,6 +247,10 @@ ul.customBxSums .bandR {
     margin-right: -50px;
 }
 
+#bizproc_task_list_table .bsTags {
+    margin-top: -2px;
+}
+
 .bx-bizproc-table-body .bsTags {
     margin-top: 0;
 }
