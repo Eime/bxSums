@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.22
+// @version      2.23
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -30,7 +30,7 @@ var
         window.localStorage.setItem("showMode", '1');
     }
 
-    if (_$(".main-kanban-column").length || _$(".bx-bizproc-table-body").length) {
+    if (_$(".main-kanban-column").length || _$("#bizproc_task_list_table").length) {
         _$("head").append(
             '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?21" rel="stylesheet" type="text/css">'
         );
@@ -86,7 +86,7 @@ function handleTags() {
         $tags.prependTo($el);
     });
 
-    _$(".bx-bizproc-table-body").find("a").each(function () {
+    _$("#bizproc_task_list_table").find("a").each(function () {
         const
           $el = _$(this),
           tags = extractValuesInBrackets($el.text());
