@@ -255,6 +255,17 @@ ul.customBxSums .bandR {
     margin-top: 0;
 }
 
+.tasks-iframe-header .task-popup-pagetitle-item > .bsTags {
+    margin-top: 0;
+    margin-right: 10px;
+}
+
+.tasks-iframe-header .task-popup-pagetitle-item > .bsTags > span{
+    padding: 0 2px;
+    line-height: 19px;
+    font-size: 12px;
+}
+
 .bsTags > span {
     background-color: #444;
     display: inline-block;
