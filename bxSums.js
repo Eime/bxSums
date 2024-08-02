@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.25
+// @version      2.26
 // @description  Summiert die Stunden in Bitrix-Boards
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -63,7 +63,39 @@ var
 
     setMenuItems();
     useSettings();
+    handleTaskLinkCopy();
 })();
+
+// Erlaubt es bei Klick auf das Task-Link-Symbol mit Shift, dass der Link im Markdown-Format im Clipboard landet
+function handleTaskLinkCopy() {
+    _$(".js-id-copy-page-url").bind("click", (ev) => { if (ev.shiftKey) {
+
+        copyToClipboard("[" + document.title.replace(/\[.*?\]/g, "").trim() + "](" + BX.util.remove_url_param(window.location.href, ["IFRAME", "IFRAME_TYPE"]) + ")", true);
+        ev.preventDefault(); ev.stopPropagation();
+        var node = ev.target;
+        var popupParams = {
+            content: BX.message('TASKS_TIP_TEMPLATE_LINK_COPIED') + " (Markdown-Format)",
+            darkMode: true,
+            autoHide: true,
+            zIndex: 1000,
+            angle: true,
+            offsetLeft: 20,
+            bindOptions: {
+                position: 'top'
+            }
+        };
+        var popup = new BX.PopupWindow(
+            'my_tasks_clipboard_copy',
+            node,
+            popupParams
+        );
+        popup.show();
+
+        setTimeout(function(){
+            popup.close();
+        }, 1500);
+    }});
+}
 
 function handleTags() {
     processTags(".main-kanban-column .tasks-kanban-item-title");
