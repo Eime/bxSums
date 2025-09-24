@@ -280,6 +280,7 @@ ul.customBxSums .bandR {
     margin-bottom: 2px;
     font-size: 12px;
     text-transform: uppercase;
+    min-height: 0;
 }
 
 .bsTags > span:before, .bsTags > span:after  {
