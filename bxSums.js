@@ -1328,6 +1328,9 @@ function loadAllSprintItemsFallback($sprint, sprintId, attempt) {
 }
 
 function calculateSprintFromDOM($sprint) {
+    // Verarbeite Tags für neu geladene Aufgaben
+    handleTags();
+    
     var
         $container = $sprint.find(".tasks-scrum__content-container"),
         $bxSums = $sprint.find(".customBxSums"),
