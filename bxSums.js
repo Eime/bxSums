@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.32
+// @version      2.33
 // @description  Summiert Stunden und Story Points in Bitrix-Boards und Sprints (mit Rest-Tags Unterstützung)
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -30,7 +30,7 @@ var
         window.localStorage.setItem("showMode", '1');
     }
 
-    if (_$(".main-kanban-column").length || _$("#bizproc_task_list_table").length || _$(".tasks-iframe-header").length) {
+    if (_$(".main-kanban-column").length || _$("#bizproc_task_list_table").length || _$(".tasks-iframe-header").length || _$(".tasks-scrum__scope").length) {
         _$("head").append(
             '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?32" rel="stylesheet" type="text/css">'
         );
