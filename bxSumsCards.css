@@ -266,6 +266,13 @@ ul.customBxSums .bandR {
     font-size: 12px;
 }
 
+/* Tags für Kanban und Scrum Ansicht */
+.tasks-kanban-item-title .bsTags,
+.tasks-scrum__item--title .bsTags {
+    margin-top: -15px;
+    margin-right: -50px;
+}
+
 .bsTags > span {
     background-color: #444;
     display: inline-block;
