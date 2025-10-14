@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.33
+// @version      2.34
 // @description  Summiert Stunden und Story Points in Bitrix-Boards und Sprints (mit Rest-Tags Unterstützung)
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -32,7 +32,7 @@ var
 
     if (_$(".main-kanban-column").length || _$("#bizproc_task_list_table").length || _$(".tasks-iframe-header").length || _$(".tasks-scrum__scope").length) {
         _$("head").append(
-            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?33" rel="stylesheet" type="text/css">'
+            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?34" rel="stylesheet" type="text/css">'
         );
     }
 
@@ -425,7 +425,8 @@ function calculateFromDOM($list, stageId, addEventHandler) {
         responsibles = {},
         totalRest = 0,
         totalSpent = 0,
-        totalEstimated = 0;
+        totalEstimated = 0,
+        useStoryPoints = false;
 
     if ($title.text().indexOf("[nocalc]") >= 0) {
         return;
@@ -454,7 +455,7 @@ function calculateFromDOM($list, stageId, addEventHandler) {
                 curRest = estimated,
                 points = 0,
                 pointsRest = 0,
-                useStoryPoints = false;
+                itemUsesStoryPoints = false;
 
             // Prüfe ob Story Points verwendet werden sollen
             var $item = _$($items[i]);
@@ -462,12 +463,15 @@ function calculateFromDOM($list, stageId, addEventHandler) {
             if ($storyPointsEl.length && $storyPointsEl.text().trim()) {
                 points = parseFloat($storyPointsEl.text().trim()) || 0;
                 pointsRest = points; // Default: Rest = Story Points
-                useStoryPoints = (points > 0);
+                itemUsesStoryPoints = (points > 0);
+                if (itemUsesStoryPoints) {
+                    useStoryPoints = true;
+                }
             }
 
             // Wenn Story Points vorhanden sind, verwende diese
             // Andernfalls verwende die Original-Zeiterfassung
-            if (!useStoryPoints && estimated > 0) {
+            if (!itemUsesStoryPoints && estimated > 0) {
                 // Original-Logik für Zeiterfassung
                 curRest = estimated;
 
@@ -502,7 +506,7 @@ function calculateFromDOM($list, stageId, addEventHandler) {
                 totalSpent += curSpent;
                 totalRest += curRest;
                 totalEstimated += estimated;
-            } else if (useStoryPoints) {
+            } else if (itemUsesStoryPoints) {
                 // Neue Logik für Story Points
                 // Rest aus Tags ermitteln (aus JavaScript-Objekt)
                 if (tags && tags.length) {
@@ -581,6 +585,9 @@ function calculateFromDOM($list, stageId, addEventHandler) {
                 var pointsText = $storyPointsEl.text().trim();
                 points = parseFloat(pointsText) || 0;
                 pointsRest = points; // Default: Rest = Story Points
+                if (points > 0) {
+                    useStoryPoints = true;
+                }
             }
 
             // Suche nach Rest-Tags im Titel und in Tags
@@ -671,10 +678,10 @@ function calculateFromDOM($list, stageId, addEventHandler) {
                     .toggleClass("filtered", $parent.attr("rel") === name)
                     .append(
                         _$("<div>").text(
-                            // Prüfe ob es Zeiterfassung (Sekunden >= 3600) oder Story Points ist
-                            (spent[id] >= 3600 ? formatTime(spent[id]) : formatStoryPoints(spent[id]) + "h") + " / " +
-                            (estimations[id] >= 3600 ? formatTime(estimations[id]) : formatStoryPoints(estimations[id]) + "h") +
-                            (rest[id] ? (" (Rest: " + (rest[id] >= 3600 ? formatTime(rest[id]) : formatStoryPoints(rest[id]) + "h") + ")") : "")
+                            // Unterscheide basierend auf useStoryPoints, nicht auf der Größe der Zahl
+                            (useStoryPoints ? formatStoryPoints(spent[id]) + "h" : formatTime(spent[id])) + " / " +
+                            (useStoryPoints ? formatStoryPoints(estimations[id]) + "h" : formatTime(estimations[id])) +
+                            (rest[id] ? (" (Rest: " + (useStoryPoints ? formatStoryPoints(rest[id]) + "h" : formatTime(rest[id])) + ")") : "")
                         )
                     ).appendTo($bxSums);
             }
@@ -693,9 +700,9 @@ function calculateFromDOM($list, stageId, addEventHandler) {
                 .html('<svg viewBox="0 0 24 24"><path fill="' + titleColor + '" d="M12,6A3,3 0 0,0 9,9A3,3 0 0,0 12,12A3,3 0 0,0 15,9A3,3 0 0,0 12,6M6,8.17A2.5,2.5 0 0,0 3.5,10.67A2.5,2.5 0 0,0 6,13.17C6.88,13.17 7.65,12.71 8.09,12.03C7.42,11.18 7,10.15 7,9C7,8.8 7,8.6 7.04,8.4C6.72,8.25 6.37,8.17 6,8.17M18,8.17C17.63,8.17 17.28,8.25 16.96,8.4C17,8.6 17,8.8 17,9C17,10.15 16.58,11.18 15.91,12.03C16.35,12.71 17.12,13.17 18,13.17A2.5,2.5 0 0,0 20.5,10.67A2.5,2.5 0 0,0 18,8.17M12,14C10,14 6,15 6,17V19H18V17C18,15 14,14 12,14M4.67,14.97C3,15.26 1,16.04 1,17.33V19H4V17C4,16.22 4.29,15.53 4.67,14.97M19.33,14.97C19.71,15.53 20,16.22 20,17V19H23V17.33C23,16.04 21,15.26 19.33,14.97Z" /></svg>')
             ).append(
                 _$("<div>").text(
-                    (totalSpent >= 3600 ? formatTime(totalSpent) : formatStoryPoints(totalSpent) + "h") + " / " +
-                    (totalEstimated >= 3600 ? formatTime(totalEstimated) : formatStoryPoints(totalEstimated) + "h")
-                    + (totalRest ? " (Rest: " + (totalRest >= 3600 ? formatTime(totalRest) : formatStoryPoints(totalRest) + "h") + ")" : "")
+                    (useStoryPoints ? formatStoryPoints(totalSpent) + "h" : formatTime(totalSpent)) + " / " +
+                    (useStoryPoints ? formatStoryPoints(totalEstimated) + "h" : formatTime(totalEstimated))
+                    + (totalRest ? " (Rest: " + (useStoryPoints ? formatStoryPoints(totalRest) + "h" : formatTime(totalRest)) + ")" : "")
                 )
             ).appendTo($bxSums);
             _$("<div>").addClass("triangle").css("border-right", "8px solid " + titleBg).appendTo($bxSums);
