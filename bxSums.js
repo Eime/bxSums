@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.34
+// @version      2.35
 // @description  Summiert Stunden und Story Points in Bitrix-Boards und Sprints (mit Rest-Tags Unterstützung)
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -32,7 +32,7 @@ var
 
     if (_$(".main-kanban-column").length || _$("#bizproc_task_list_table").length || _$(".tasks-iframe-header").length || _$(".tasks-scrum__scope").length) {
         _$("head").append(
-            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?34" rel="stylesheet" type="text/css">'
+            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?35" rel="stylesheet" type="text/css">'
         );
     }
 
@@ -64,6 +64,12 @@ var
     setMenuItems();
     useSettings();
     handleTaskLinkCopy();
+
+    // WICHTIG: setupTaskCloseObserver muss IMMER laufen, nicht nur wenn useCalc() aktiv ist
+    // Warte kurz bis BX verfügbar ist
+    _.delay(function() {
+        setupTaskCloseObserver();
+    }, 500);
 })();
 
 // Erlaubt es bei Klick auf das Task-Link-Symbol mit Shift, dass der Link im Markdown-Format im Clipboard landet
@@ -290,6 +296,9 @@ function onCssLoaded() {
     $container.unbind("scroll");
     $container.bind("scroll", _.debounce(calculateVisibles, 50));
 
+    // Beobachte das Schließen von Aufgaben (SidePanel Events)
+    setupTaskCloseObserver();
+
     // Beobachte Sprint-Änderungen
     if (_$(".tasks-scrum__sprints").length) {
         var lastTaskCount = {};
@@ -344,6 +353,216 @@ function onCssLoaded() {
     }
 }
 
+function setupTaskCloseObserver() {
+    // Beobachte das Schließen von Aufgaben mit BX.SidePanel Events
+    if (typeof BX !== 'undefined' && BX.SidePanel) {
+        BX.addCustomEvent("SidePanel.Slider:onClose", function(event) {
+            // Hole Task-ID aus der URL des SidePanels
+            var taskId = null;
+            if (event && event.getSlider) {
+                var slider = event.getSlider();
+                if (slider && slider.getUrl) {
+                    var url = slider.getUrl();
+                    // Extrahiere Task-ID aus URL wie /company/personal/user/123/tasks/task/view/456/
+                    var match = url.match(/\/tasks\/task\/view\/(\d+)/);
+                    if (match && match[1]) {
+                        taskId = parseInt(match[1]);
+                    }
+                }
+            }
+
+            // Wenn wir eine Task-ID haben, hole die aktuellen Tags per API
+            if (taskId) {
+                fetchTaskDataAndUpdate(taskId);
+            }
+
+            // Minimale Verzögerung (50ms) um sicherzustellen dass DOM stabil ist
+            _.delay(function() {
+                // Entferne calculated-Flags von ALLEN Spalten
+                _$(".main-kanban-column-body").removeClass("calculated");
+
+                calculateVisibles();
+                prepareSprints();
+            }, 50);
+        });
+
+        BX.addCustomEvent("SidePanel.Slider:onCloseComplete", function(event) {
+            // Sofort ohne Verzögerung
+            _$(".main-kanban-column-body").removeClass("calculated");
+            calculateVisibles();
+            prepareSprints();
+        });
+    }
+}
+
+function fetchTaskDataAndUpdate(taskId) {
+    // Rufe Task-Daten per Bitrix REST API ab
+    if (typeof BX === 'undefined' || !BX.ajax) {
+        triggerRecalculation();
+        return;
+    }
+
+    BX.ajax.runAction('tasks.task.get', {
+        data: {
+            taskId: taskId,
+            select: ['ID', 'TAGS']
+        }
+    }).then(function(response) {
+        if (response && response.data && response.data.task) {
+            var task = response.data.task;
+            var tagsRaw = task.tags || {};
+
+            // Konvertiere Tags-Objekt in Array von Tag-Namen
+            var tags = [];
+            if (Array.isArray(tagsRaw)) {
+                tags = tagsRaw;
+            } else if (typeof tagsRaw === 'object' && tagsRaw !== null) {
+                // Objekt mit Tag-IDs als Keys
+                for (var tagId in tagsRaw) {
+                    if (tagsRaw.hasOwnProperty(tagId)) {
+                        var tagObj = tagsRaw[tagId];
+
+                        // Versuche verschiedene Formate
+                        if (typeof tagObj === 'string') {
+                            tags.push(tagObj);
+                        } else if (tagObj && tagObj.name) {
+                            tags.push(tagObj.name);
+                        } else if (tagObj && tagObj.NAME) {
+                            tags.push(tagObj.NAME);
+                        } else if (tagObj && typeof tagObj === 'object') {
+                            // Versuche den ersten String-Wert zu nehmen
+                            for (var key in tagObj) {
+                                if (typeof tagObj[key] === 'string' && tagObj[key].length > 0) {
+                                    tags.push(tagObj[key]);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Aktualisiere das Kanban-Objekt, falls vorhanden
+            updateKanbanObjectTags(taskId, tags);
+
+            // Warte etwas länger, bis DOM stabil ist, dann aktualisiere
+            _.delay(function() {
+                updateTaskTagsInDOM(taskId, tags);
+                updateTaskTagsInScrum(taskId, tags);
+                triggerRecalculation();
+            }, 300);
+        } else {
+            triggerRecalculation();
+        }
+    }).catch(function(error) {
+        triggerRecalculation();
+    });
+}
+
+function updateKanbanObjectTags(taskId, tags) {
+    // WICHTIG: Wir müssen IMMER aktualisieren, auch wenn tags leer ist!
+    // Ein leeres Array bedeutet "Tags wurden entfernt", nicht "nichts tun"
+
+    // Aktualisiere das Kanban-Objekt direkt, falls vorhanden
+    if (typeof Kanban !== 'undefined' && Kanban.columns) {
+        // Finde die Task im Kanban-Objekt
+        for (var columnId in Kanban.columns) {
+            var column = Kanban.columns[columnId];
+            if (column && column.items) {
+                for (var i = 0; i < column.items.length; i++) {
+                    var item = column.items[i];
+                    if (item && item.data && item.data.id == taskId) {
+                        // WICHTIG: Aktualisiere IMMER, auch wenn leer!
+                        // Leeres Array = Tags wurden entfernt
+                        item.data.tags = tags || [];
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+function triggerRecalculation() {
+    // Entferne ALLE calculated-Flags sofort
+    _$(".main-kanban-column-body").removeClass("calculated");
+    _$(".tasks-scrum__content-container").removeClass("sprint-calculated");
+    _$(".tasks-scrum__content-items").removeClass("backlog-calculated");
+
+    // Warte kurz, dann verarbeite Tags und rechne neu
+    _.delay(function() {
+        // Tags verarbeiten
+        handleTags();
+
+        // Neuberechnung durchführen
+        calculateVisibles();
+        prepareSprints();
+    }, 200);
+}
+
+function updateTaskTagsInDOM(taskId, tags) {
+    // Finde die Karte im Kanban-Board
+    var $item = _$('.main-kanban-item[data-item-id="' + taskId + '"]');
+    if (!$item.length) {
+        return;
+    }
+
+    // Entferne alte Tag-Elemente
+    var $tagsContainer = $item.find('.tasks-kanban-item-tags');
+    if ($tagsContainer.length) {
+        // WICHTIG: Leere den Container komplett (auch wenn keine neuen Tags kommen)
+        $tagsContainer.empty();
+
+        // Füge neue Tags hinzu (nur wenn vorhanden)
+        if (tags && tags.length > 0) {
+            tags.forEach(function(tag) {
+                var $tag = _$('<span class="ui-label ui-label-sm ui-label-light">' +
+                    '<span class="ui-label-inner">' + tag + '</span>' +
+                    '</span>');
+                $tagsContainer.append($tag);
+            });
+        }
+    } else {
+        // Falls kein Tag-Container existiert, erstelle einen
+        var $kanbanItem = $item.find('.tasks-kanban-item');
+        if ($kanbanItem.length && tags && tags.length > 0) {
+            $tagsContainer = _$('<div class="tasks-kanban-item-tags"></div>');
+            tags.forEach(function(tag) {
+                var $tag = _$('<span class="ui-label ui-label-sm ui-label-light">' +
+                    '<span class="ui-label-inner">' + tag + '</span>' +
+                    '</span>');
+                $tagsContainer.append($tag);
+            });
+            $kanbanItem.append($tagsContainer);
+        }
+    }
+}
+
+function updateTaskTagsInScrum(taskId, tags) {
+    // Finde die Task in der Scrum/Sprint-Ansicht
+    var $item = _$('.tasks-scrum__item[data-id="' + taskId + '"]');
+    if (!$item.length) {
+        return;
+    }
+
+    // Entferne alte Tags und füge neue hinzu
+    var $hashtagEl = $item.find('.tasks-scrum__item--hashtag');
+    if ($hashtagEl.length && tags && tags.length) {
+        // Suche nach Rest-Tag
+        var restTag = null;
+        tags.forEach(function(tag) {
+            var cleanTag = tag.replace(/^#/, '');
+            if (cleanTag.match(/^Rest\s*:?\s*([\d.,]+)\s*?$/i)) {
+                restTag = tag;
+            }
+        });
+
+        if (restTag) {
+            $hashtagEl.text(restTag);
+        }
+    }
+}
+
 function calculateVisibles() {
     if (!useCalc()) {
         return;
@@ -352,7 +571,10 @@ function calculateVisibles() {
     var
         $container = _$(".main-kanban-grid");
 
-    _$(".main-kanban-column-body").not(".calculated").each(function () {
+    var $allColumns = _$(".main-kanban-column-body");
+    var $notCalculated = $allColumns.not(".calculated");
+
+    $notCalculated.each(function () {
         var
             $this = _$(this),
             $parent = $this.parent(),
@@ -378,7 +600,7 @@ function calculateVisibles() {
     });
 }
 
-function calculateFromDOM($list, stageId, addEventHandler) {
+function calculateFromDOM($list, stageId, addEventHandler, skipHandleTags) {
     var
         $parent = $list.parent(),
         $bxSums = $parent.find(".customBxSums"),
@@ -432,14 +654,9 @@ function calculateFromDOM($list, stageId, addEventHandler) {
         return;
     }
 
-    if (addEventHandler && column) {
-        BX.addCustomEvent(column.grid, "Kanban.Column:render", function () {
-            calculateFromDOM($list, stageId);
-            _.delay(prepareColumns, 200);
-        });
+    if (!skipHandleTags) {
+        handleTags();
     }
-
-    handleTags();
 
     // Wenn Kanban-Objekt verfügbar ist, verwende es (bevorzugt)
     if (tasks && tasks.length) {
@@ -835,11 +1052,19 @@ function prepareSprints() {
         if ($items.length && !$items.hasClass("backlog-calculated")) {
             calculateBacklogFromDOM($backlog);
             $items.addClass("backlog-calculated");
+
+            // Füge Scroll-Listener hinzu um Tags bei Scroll nachzuführen
+            setupBacklogScrollObserver($backlog);
         }
     });
 }
 
-function calculateBacklogFromDOM($backlog) {
+function calculateBacklogFromDOM($backlog, skipHandleTags) {
+    // Verarbeite Tags für neu geladene Aufgaben
+    if (!skipHandleTags) {
+        handleTags();
+    }
+
     var
         $bxSums = $backlog.find(".customBxSums"),
         $header = $backlog.find(".tasks-scrum__content-header"),
@@ -977,6 +1202,52 @@ function calculateBacklogFromDOM($backlog) {
     }
 }
 
+function setupBacklogScrollObserver($backlog) {
+    var $itemsContainer = $backlog.find(".tasks-scrum__content-items");
+    if (!$itemsContainer.length) {
+        return;
+    }
+
+    // Verhindere mehrfache Observer
+    if ($backlog.data("scroll-observer-installed")) {
+        return;
+    }
+    $backlog.data("scroll-observer-installed", true);
+
+    // Erstelle MutationObserver der auf neue Tasks reagiert
+    var recalculateTimer = null;
+
+    function checkAndRecalculate() {
+        handleTags();
+        calculateBacklogFromDOM($backlog);
+    }
+
+    var observer = new MutationObserver(function(mutations) {
+        // Debounce
+        clearTimeout(recalculateTimer);
+        recalculateTimer = setTimeout(checkAndRecalculate, 300);
+    });
+
+    // Starte Observer - beobachte alle Änderungen (Story Points, Zuständige, etc.)
+    observer.observe($itemsContainer[0], {
+        childList: true,          // Neue/entfernte Elemente
+        subtree: true,            // Auch in Unter-Elementen
+        attributes: true,         // Attributänderungen (z.B. style, data-*, background-image)
+        characterData: true,      // Textänderungen (z.B. Story Points, Tags)
+        attributeOldValue: false, // Alte Werte nicht speichern (Performance)
+        characterDataOldValue: false
+    });
+
+    // Zusätzlich: Scroll-Listener der regelmäßig prüft
+    var scrollTimer = null;
+    $itemsContainer.on('scroll', function() {
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(function() {
+            checkAndRecalculate();
+        }, 800);
+    });
+}
+
 function setupSprintObserver($sprint) {
     var $itemsContainer = $sprint.find(".tasks-scrum__content-items");
     if (!$itemsContainer.length) {
@@ -1019,15 +1290,19 @@ function setupSprintObserver($sprint) {
     }
 
     var observer = new MutationObserver(function(mutations) {
-        // Debounce mit kürzerer Zeit
+        // Debounce
         clearTimeout(recalculateTimer);
         recalculateTimer = setTimeout(checkAndRecalculate, 300);
     });
 
-    // Starte Observer
+    // Starte Observer - beobachte alle Änderungen (Story Points, Zuständige, etc.)
     observer.observe($itemsContainer[0], {
-        childList: true,
-        subtree: true
+        childList: true,          // Neue/entfernte Elemente
+        subtree: true,            // Auch in Unter-Elementen
+        attributes: true,         // Attributänderungen (z.B. style, data-*, background-image)
+        characterData: true,      // Textänderungen (z.B. Story Points, Tags)
+        attributeOldValue: false, // Alte Werte nicht speichern (Performance)
+        characterDataOldValue: false
     });
 
     // Zusätzlich: Scroll-Listener der regelmäßig prüft
@@ -1035,7 +1310,7 @@ function setupSprintObserver($sprint) {
     $itemsContainer.on('scroll', function() {
         clearTimeout(scrollTimer);
         scrollTimer = setTimeout(function() {
-            checkAndRecalculate();
+            checkAndRecalculate(false);
         }, 800);
     });
 }
@@ -1334,10 +1609,12 @@ function loadAllSprintItemsFallback($sprint, sprintId, attempt) {
     }, 2000);
 }
 
-function calculateSprintFromDOM($sprint) {
+function calculateSprintFromDOM($sprint, skipHandleTags) {
     // Verarbeite Tags für neu geladene Aufgaben
-    handleTags();
-    
+    if (!skipHandleTags) {
+        handleTags();
+    }
+
     var
         $container = $sprint.find(".tasks-scrum__content-container"),
         $bxSums = $sprint.find(".customBxSums"),
