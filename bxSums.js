@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.35
+// @version      2.36
 // @description  Summiert Stunden und Story Points in Bitrix-Boards und Sprints (mit Rest-Tags Unterstützung)
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -32,7 +32,7 @@ var
 
     if (_$(".main-kanban-column").length || _$("#bizproc_task_list_table").length || _$(".tasks-iframe-header").length || _$(".tasks-scrum__scope").length) {
         _$("head").append(
-            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?35" rel="stylesheet" type="text/css">'
+            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?36" rel="stylesheet" type="text/css">'
         );
     }
 
@@ -295,6 +295,17 @@ function onCssLoaded() {
 
     $container.unbind("scroll");
     $container.bind("scroll", _.debounce(calculateVisibles, 50));
+
+    // Globaler Event-Handler für Spalten-Aktualisierung bei Drag&Drop
+    if (typeof BX !== 'undefined' && !window._bxSumsKanbanEventRegistered) {
+        window._bxSumsKanbanEventRegistered = true;
+        BX.addCustomEvent("Kanban.Column:render", _.debounce(function () {
+            // Bei Verschiebung müssen ALLE sichtbaren Spalten neu berechnet werden
+            _$(".main-kanban-column-body").removeClass("calculated");
+            calculateVisibles();
+            _.delay(prepareColumns, 200);
+        }, 100));
+    }
 
     // Beobachte das Schließen von Aufgaben (SidePanel Events)
     setupTaskCloseObserver();
@@ -1363,6 +1374,13 @@ function showScrollWarning($sprint, total, loaded) {
     $sprint.find(".scroll-warning-banner").remove();
     _$(".scroll-warning-banner").remove();
 
+    // Starte automatisches Laden der fehlenden Items
+    var sprintId = $sprint.attr("data-sprint-id");
+    if (sprintId && !$sprint.data("auto-loading-started")) {
+        $sprint.data("auto-loading-started", true);
+        loadAllSprintItemsViaAPI($sprint, sprintId);
+    }
+
     var $warning = _$("<div>")
         .addClass("scroll-warning-banner")
         .css({
@@ -1387,8 +1405,8 @@ function showScrollWarning($sprint, total, loaded) {
             '<path d="M11 7h2v7h-2zm0 8h2v2h-2z" fill="white"/>' +
             '</svg>' +
             '<div style="flex: 1; line-height: 1.5;">' +
-            '<div style="font-weight: 700; margin-bottom: 2px;">⚠️ Nur ' + loaded + ' von ' + total + ' Aufgaben geladen</div>' +
-            '<div style="font-size: 11px; opacity: 0.95;">Scrollen Sie nach unten - Berechnung wird automatisch aktualisiert</div>' +
+            '<div style="font-weight: 700; margin-bottom: 2px;">⏳ Lade ' + loaded + ' von ' + total + ' Aufgaben...</div>' +
+            '<div style="font-size: 11px; opacity: 0.95;">Automatisches Laden gestartet - bitte warten</div>' +
             '</div>' +
             '<button style="background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background=\'rgba(255,255,255,0.35)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.25)\'" onclick="this.parentElement.remove()">OK</button>'
         );
@@ -1550,7 +1568,6 @@ function loadAllSprintItemsFallback($sprint, sprintId, attempt) {
         return;
     }
 
-    var container = $itemsContainer[0];
     var currentCount = $sprint.find(".tasks-scrum__item:not(.tasks-scrum-entity-items-loader)").length;
 
     var tracking = $sprint.data("loading-tracking");
@@ -1563,23 +1580,22 @@ function loadAllSprintItemsFallback($sprint, sprintId, attempt) {
         $sprint.data("loading-tracking", tracking);
     }
 
-    var scrollHeight = container.scrollHeight;
-    var clientHeight = container.clientHeight;
-    var maxScroll = scrollHeight - clientHeight;
-
-    container.scrollTop = maxScroll * 0.2;
-    setTimeout(function() {
-        container.scrollTop = maxScroll * 0.4;
-    }, 300);
-    setTimeout(function() {
-        container.scrollTop = maxScroll * 0.6;
-    }, 600);
-    setTimeout(function() {
-        container.scrollTop = maxScroll * 0.8;
-    }, 900);
-    setTimeout(function() {
-        container.scrollTop = maxScroll;
-    }, 1200);
+    // Finde den Loader und scrolle ihn in den sichtbaren Bereich
+    var $loader = $sprint.find(".tasks-scrum-entity-items-loader.--waiting");
+    if ($loader.length) {
+        // Scrolle den Loader in den Viewport - das triggert den IntersectionObserver
+        $loader[0].scrollIntoView({ behavior: 'instant', block: 'center' });
+    } else {
+        // Fallback: Finde den scrollbaren übergeordneten Container
+        var $scrollContainer = _$(".tasks-scrum__sprints");
+        if ($scrollContainer.length && $scrollContainer[0].scrollHeight > $scrollContainer[0].clientHeight) {
+            var scrollContainer = $scrollContainer[0];
+            scrollContainer.scrollTop = scrollContainer.scrollTop + 300;
+        } else {
+            // Letzte Option: Scroll im Window
+            window.scrollBy(0, 300);
+        }
+    }
 
     _.delay(function() {
         var newCount = $sprint.find(".tasks-scrum__item:not(.tasks-scrum-entity-items-loader)").length;
@@ -1595,18 +1611,25 @@ function loadAllSprintItemsFallback($sprint, sprintId, attempt) {
         var expectedCount = $sprint.data("expected-count") || 0;
         var foundAllTasks = (expectedCount > 0 && newCount >= expectedCount);
 
-        var shouldStop = tracking.sameCountAttempts >= 5 || foundAllTasks;
-        var maxAttemptsReached = attempt >= 20;
+        // Stoppe auch wenn kein Loader mehr da ist
+        var shouldStop = tracking.sameCountAttempts >= 3 || foundAllTasks || !hasLoader;
+        var maxAttemptsReached = attempt >= 15;
 
         if (shouldStop || maxAttemptsReached) {
-            container.scrollTop = 0;
+            // Scrolle zurück zum Sprint-Header
+            var $header = $sprint.find(".tasks-scrum__content-header");
+            if ($header.length) {
+                $header[0].scrollIntoView({ behavior: 'instant', block: 'start' });
+            }
             $sprint.removeData("loading-tracking");
             $sprint.data("loading-completed", true);
+            // Entferne die Warnung
+            $sprint.find(".scroll-warning-banner").remove();
             calculateSprintFromDOM($sprint);
         } else {
             loadAllSprintItemsFallback($sprint, sprintId, attempt + 1);
         }
-    }, 2000);
+    }, 500);
 }
 
 function calculateSprintFromDOM($sprint, skipHandleTags) {
