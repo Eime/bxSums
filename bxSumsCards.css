@@ -275,7 +275,7 @@ ul.customBxSums .bandR {
 .tasks-kanban-item-title .bsTags,
 .tasks-scrum__item--title .bsTags {
     display: inline-block;
-    margin: 0 6px 0 0;
+    margin: 0 -3px 0 0;
     vertical-align: middle;
 }
 
