@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.37
+// @version      2.38
 // @description  Summiert Stunden und Story Points in Bitrix-Boards und Sprints (mit Rest-Tags Unterstützung)
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -91,17 +91,18 @@ function handleTaskLinkCopy() {
 
     // Markdown-Button erstellen
     const $markdownButton = _$('<span>')
-        .addClass('ui-btn ui-btn-light-border ui-toolbar-markdown-copy-button')
+        .addClass('ui-btn ui-btn-light-border ui-icon-set__scope --air ui-btn-no-caps --with-left-icon ui-btn-icon-follow --style-outline ui-btn-sm ui-btn-collapsed ui-toolbar-markdown-copy-button')
         .attr('title', 'Link als Markdown kopieren')
         .css({
             'background-image': `url(${markdownSvgBase64})`,
             'background-repeat': 'no-repeat',
+            'background-color': '#fff',
             'background-position': 'center',
-            'background-size': '16px 16px',
+            'background-size': '12px 12px',
             'width': '32px',
-            'height': '32px',
+            'height': '28px',
             'cursor': 'pointer',
-            'margin-right': '4px'
+            'margin-right': '0'
         })
         .bind("click", (ev) => {
             copyToClipboard("[" + taskId + " - " + document.title.replace(/\[.*?\]/g, "").trim() + "](" + BX.util.remove_url_param(window.location.href, ["IFRAME", "IFRAME_TYPE"]) + ")", true);
@@ -112,17 +113,18 @@ function handleTaskLinkCopy() {
 
     // Excel-Button erstellen
     const $excelButton = _$('<span>')
-        .addClass('ui-btn ui-btn-light-border ui-toolbar-excel-copy-button')
+        .addClass('ui-btn ui-btn-light-border ui-icon-set__scope --air ui-btn-no-caps --with-left-icon ui-btn-icon-follow --style-outline ui-btn-sm ui-btn-collapsed ui-toolbar-excel-copy-button')
         .attr('title', 'Task-Daten für Excel kopieren')
         .css({
             'background-image': `url(${excelSvgBase64})`,
             'background-repeat': 'no-repeat',
             'background-position': 'center',
-            'background-size': '16px 16px',
+            'background-color': '#fff',
+            'background-size': '12px 12px',
             'width': '32px',
-            'height': '32px',
+            'height': '28px',
             'cursor': 'pointer',
-            'margin-right': '4px'
+            'margin-right': '0'
         })
         .bind("click", (ev) => {
             copyTaskDataToClipboard();
