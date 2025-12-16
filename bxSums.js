@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.38
+// @version      2.39
 // @description  Summiert Stunden und Story Points in Bitrix-Boards und Sprints (mit Rest-Tags Unterstützung)
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -29,12 +29,14 @@ var
     if (window.localStorage.getItem("showMode") === null) {
         window.localStorage.setItem("showMode", '1');
     }
-
-    if (_$(".main-kanban-column").length || _$("#bizproc_task_list_table").length || _$(".tasks-iframe-header").length || _$(".tasks-scrum__scope").length) {
-        _$("head").append(
-            '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?36" rel="stylesheet" type="text/css">'
-        );
-    }
+    _$("head").append(
+        '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?36" rel="stylesheet" type="text/css">'
+    );
+//     if (_$(".main-kanban-column").length || _$("#bizproc_task_list_table").length || _$(".tasks-iframe-header").length || _$(".tasks-scrum__scope").length) {
+//         _$("head").append(
+//             '<link id="bxSumsLink" href="https://eime.github.io/bxSums/bxSumsCards.css?36" rel="stylesheet" type="text/css">'
+//         );
+//     }
 
     handleTags();
 
@@ -64,6 +66,9 @@ var
     setMenuItems();
     useSettings();
     handleTaskLinkCopy();
+
+    _$("#tasks-flow-selector-container .ui-btn-text-inner").text("Flow");
+    _$(".ui-toolbar.--air.--multiline-title .ui-toolbar-right-buttons").css("gap", "0 4px");
 
     // WICHTIG: setupTaskCloseObserver muss IMMER laufen, nicht nur wenn useCalc() aktiv ist
     // Warte kurz bis BX verfügbar ist
@@ -215,6 +220,9 @@ function copyTaskDataToClipboard() {
 
 // Hilfsfunktion für Task-ID (aus dem ursprünglichen Script)
 function getTaskId(removeHash) {
+    if (!_$(".task-detail-subtitle-status").text().trim().length) {
+        return "";
+    }
     const result = _$(".task-detail-subtitle-status").text().trim().match(/#\d+/)[0] || "";
 
     if (!removeHash) {
@@ -228,6 +236,7 @@ function handleTags() {
     processTags(".task-popup-pagetitle-item");
     processTags("#bizproc_task_list_table a", true);
     processTags(".tasks-scrum__item--title");
+    processTags("#pagetitle");
 }
 
 function processTags(selector, parentSelector) {
