@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.36
+// @version      2.37
 // @description  Summiert Stunden und Story Points in Bitrix-Boards und Sprints (mit Rest-Tags Unterstützung)
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -72,35 +72,153 @@ var
     }, 500);
 })();
 
-// Erlaubt es bei Klick auf das Task-Link-Symbol mit Shift, dass der Link im Markdown-Format im Clipboard landet
+// Erstellt Buttons für Markdown-Link-Kopieren und Excel-Daten-Kopieren
 function handleTaskLinkCopy() {
-    _$(".js-id-copy-page-url").bind("click", (ev) => { if (ev.shiftKey) {
+    const taskId = getTaskId(true);
+    if (!taskId) {
+        return;
+    }
+    // SVG für Markdown-Button als Base64 kodiert
+    const markdownSvgBase64 = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTMiIGhlaWdodD0iMTMiIHZpZXdCb3g9IjAgMCAxMyAxMyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGcgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwXzM2NF85KSI+CjxwYXRoIGQ9Ik01Ljg5MDYyIDMuNjU5MThDNi4zNDM2NSAzLjY1OTI0IDYuNzkyNDEgMy43NDg0NyA3LjIxMDk0IDMuOTIxODhDNy42Mjk0OSA0LjA5NTMzIDguMDA5NzYgNC4zNDk1IDguMzMwMDggNC42Njk5MkM4LjUzMzY3IDQuODc4NzkgOC43MDk4OSA1LjExMzMyIDguODUzNTIgNS4zNjcxOUw3LjcxOTczIDYuNUM3LjY2NTc4IDYuNTUzODMgNy42MDAwMyA2LjU4NDE2IDcuNTM2MTMgNi42MjEwOUM3LjQ1NzEzIDYuMzU0MDkgNy4zMjAzNSA2LjA5OTY1IDcuMTEwMzUgNS44ODk2NUM2Ljc4NjgxIDUuNTY2MzggNi4zNDc5OCA1LjM4NDg4IDUuODkwNjIgNS4zODQ3N0M1LjQzMzA5IDUuMzg0NzcgNC45OTM1NyA1LjU2NjI1IDQuNjY5OTIgNS44ODk2NUwyLjIzMDQ3IDguMzMwMDhDMS45MDc1OCA4LjY1Mzk2IDEuNzI1NjIgOS4wOTI0OCAxLjcyNTU5IDkuNTQ5OEMxLjcyNTU5IDEwLjAwNzEgMS45MDc1OSAxMC40NDU2IDIuMjMwNDcgMTAuNzY5NUMyLjU1NDM4IDExLjA5MjQgMi45OTI4MiAxMS4yNzQ0IDMuNDUwMiAxMS4yNzQ0QzMuOTA3NTcgMTEuMjc0NCA0LjM0NjAxIDExLjA5MjQgNC42Njk5MiAxMC43Njk1TDUuNTM4MDkgOS45MDIzNEM1LjY5NjM1IDkuOTYzMSA1Ljg1ODE3IDEwLjAxMjEgNi4wMjE0OCAxMC4wNTM3QzYuMDA3MDMgMTAuMjAwNSA2IDEwLjM0OTQgNiAxMC41QzYgMTAuOTIwMyA2LjA1ODI0IDExLjMyNyA2LjE2NjAyIDExLjcxMjlMNS44OTA2MiAxMS45OTAyQzUuMjQzNSAxMi42Mzc0IDQuMzY1MzcgMTMuMDAxIDMuNDUwMiAxMy4wMDFDMi41MzUwMiAxMy4wMDEgMS42NTY4OSAxMi42Mzc0IDEuMDA5NzcgMTEuOTkwMkMwLjM2MjY3NCAxMS4zNDMxIDYuODE4NGUtMDkgMTAuNDY1IDAgOS41NDk4QzMuMjA2NDhlLTA1IDguNjM0ODcgMC4zNjI5MzMgNy43NTc0MSAxLjAwOTc3IDcuMTEwMzVMMy40NTAyIDQuNjY5OTJDMy43NzA1IDQuMzQ5NDkgNC4xNTA3OSA0LjA5NTM0IDQuNTY5MzQgMy45MjE4OEM0Ljk4OCAzLjc0ODQxIDUuNDM3NDUgMy42NTkxOCA1Ljg5MDYyIDMuNjU5MThaTTUuNDYzODcgNi4zNzc5M0M1LjU0Mjg3IDYuNjQ1OTMgNS42Nzk2MyA2Ljg5OTM1IDUuODkwNjIgNy4xMTAzNUM2LjIwMDA3IDcuNDE4OTggNi42MTQ1IDcuNTk2MDkgNy4wNDk4IDcuNjExMzNDNi42NjA5MyA4LjA3NTMgNi4zNjM3MiA4LjYxODY5IDYuMTg2NTIgOS4yMTM4N0M2LjA1MjA2IDkuMTc2NDkgNS45MTk1MSA5LjEzMTc1IDUuNzkwMDQgOS4wNzgxMkM1LjM3MTM4IDguOTA0NjYgNC45OTAzIDguNjUwNTggNC42Njk5MiA4LjMzMDA4QzQuNDY2NTUgOC4xMjExOSA0LjI5MSA3Ljg4Njk5IDQuMTQ2NDggNy42MzM3OUw1LjI4MDI3IDYuNUM1LjMzNDIgNi40NDYwNyA1LjM5OTk1IDYuNDE0ODcgNS40NjM4NyA2LjM3NzkzWk05LjU0OTggMEMxMC40NjQ5IDYuODE4MzZlLTA5IDExLjM0MzEgMC4zNjM2NTggMTEuOTkwMiAxLjAxMDc0QzEyLjYzNzQgMS42NTc4NyAxMy4wMDEgMi41MzU5OSAxMy4wMDEgMy40NTExN0MxMy4wMDA5IDQuMzY2MTkgMTIuNjM3MiA1LjI0MjU5IDExLjk5MDIgNS44ODk2NUwxMS43MTI5IDYuMTY2MDJDMTEuMzI3IDYuMDU4MjQgMTAuOTIwMyA2IDEwLjUgNkMxMC4wNzI5IDYgOS42NjAwMyA2LjA2MDcxIDkuMjY4NTUgNi4xNzE4OEwxMC43NzA1IDQuNjY5OTJDMTEuMDkzNyA0LjM0NjM1IDExLjI3NTMgMy45MDc1NiAxMS4yNzU0IDMuNDUwMkMxMS4yNzU0IDIuOTkyNjYgMTEuMDkzOSAyLjU1MzE0IDEwLjc3MDUgMi4yMjk0OUMxMC40NDY3IDEuOTA2MzcgMTAuMDA3MiAxLjcyNTU5IDkuNTQ5OCAxLjcyNTU5QzkuMDkyNTcgMS43MjU2OSA4LjY1Mzc1IDEuOTA2NTIgOC4zMzAwOCAyLjIyOTQ5TDcuNDYxOTEgMy4wOTg2M0M2Ljc2MTg2IDIuODI5NDggNi4wMDMzNCAyLjc0NzQzIDUuMjYxNzIgMi44NTkzOEw3LjExMDM1IDEuMDEwNzRDNy43NTczNyAwLjM2MzgxMiA4LjYzNDg1IDAuMDAwMTAyNzU1IDkuNTQ5OCAwWiIgZmlsbD0iIzgwODY4RSIvPgo8cGF0aCBkPSJNNy4zNTIgMTJWNy45MTJIOC4xOTJWOC45Mkw4LjA0OCA4Ljg0QzguMDg4IDguNTIgOC4xODQgOC4yNjkzMyA4LjMzNiA4LjA4OEM4LjQ5MDY3IDcuOTA2NjcgOC42ODUzMyA3LjgxNiA4LjkyIDcuODE2QzkuMTI4IDcuODE2IDkuMjkzMzMgNy44Nzg2NyA5LjQxNiA4LjAwNEM5LjUzODY3IDguMTI5MzMgOS42MjQgOC4yNjQgOS42NzIgOC40MDhDOS43NjUzMyA4LjI1ODY3IDkuODg2NjcgOC4xMjI2NyAxMC4wMzYgOEMxMC4xODggNy44NzczMyAxMC4zNzYgNy44MTYgMTAuNiA3LjgxNkMxMC45MiA3LjgxNiAxMS4xNjI3IDcuOTMwNjcgMTEuMzI4IDguMTZDMTEuNDkzMyA4LjM4OTMzIDExLjU3NiA4Ljc5MiAxMS41NzYgOS4zNjhWMTJIMTAuNzM2VjkuNTA0QzEwLjczNiA5LjIyNCAxMC43MTA3IDkuMDIgMTAuNjYgOC44OTJDMTAuNjA5MyA4Ljc2MTMzIDEwLjUwOTMgOC42OTYgMTAuMzYgOC42OTZDMTAuMjY2NyA4LjY5NiAxMC4xODUzIDguNzI4IDEwLjExNiA4Ljc5MkMxMC4wNDkzIDguODU2IDkuOTk3MzMgOC45NDkzMyA5Ljk2IDkuMDcyQzkuOTIyNjcgOS4xOTIgOS45MDQgOS4zMzg2NyA5LjkwNCA5LjUxMlYxMkg5LjA2NFY5LjQ4QzkuMDY0IDkuMzE0NjcgOS4wNTA2NyA5LjE3MzMzIDkuMDI0IDkuMDU2QzguOTk3MzMgOC45Mzg2NyA4Ljk1NiA4Ljg0OTMzIDguOSA4Ljc4OEM4Ljg0NCA4LjcyNjY3IDguNzcwNjcgOC42OTYgOC42OCA4LjY5NkM4LjU4MTMzIDguNjk2IDguNDk0NjcgOC43MjggOC40MiA4Ljc5MkM4LjM0OCA4Ljg1NiA4LjI5MiA4Ljk0OTMzIDguMjUyIDkuMDcyQzguMjEyIDkuMTkyIDguMTkyIDkuMzM4NjcgOC4xOTIgOS41MTJWMTJINy4zNTJaIiBmaWxsPSIjODA4NjhFIi8+CjwvZz4KPGRlZnM+CjxjbGlwUGF0aCBpZD0iY2xpcDBfMzY0XzkiPgo8cmVjdCB3aWR0aD0iMTMiIGhlaWdodD0iMTMiIGZpbGw9IndoaXRlIi8+CjwvY2xpcFBhdGg+CjwvZGVmcz4KPC9zdmc+Cg==";
 
-        copyToClipboard("[" + document.title.replace(/\[.*?\]/g, "").trim() + "](" + BX.util.remove_url_param(window.location.href, ["IFRAME", "IFRAME_TYPE"]) + ")", true);
-        ev.preventDefault(); ev.stopPropagation();
-        var node = ev.target;
-        var popupParams = {
-            content: BX.message('TASKS_TIP_TEMPLATE_LINK_COPIED') + " (Markdown-Format)",
-            darkMode: true,
-            autoHide: true,
-            zIndex: 1000,
-            angle: true,
-            offsetLeft: 20,
-            bindOptions: {
-                position: 'top'
-            }
-        };
-        var popup = new BX.PopupWindow(
-            'my_tasks_clipboard_copy',
-            node,
-            popupParams
-        );
-        popup.show();
+    // SVG für Excel-Button als Base64 kodiert (Tabellen-Icon)
+    const excelSvgBase64 = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTMiIGhlaWdodD0iMTMiIHZpZXdCb3g9IjAgMCAxMyAxMyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGcgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwXzM2NF8xNikiPgo8cGF0aCBkPSJNNS44OTA2MiAzLjY1OTE4QzYuMzQzNjUgMy42NTkyNCA2Ljc5MjQxIDMuNzQ4NDcgNy4yMTA5NCAzLjkyMTg4QzcuNjI5NDkgNC4wOTUzMyA4LjAwOTc2IDQuMzQ5NSA4LjMzMDA4IDQuNjY5OTJDOC41MzM2NyA0Ljg3ODc5IDguNzA5ODkgNS4xMTMzMiA4Ljg1MzUyIDUuMzY3MTlMNy43MTk3MyA2LjVDNy42NjU3OCA2LjU1MzgzIDcuNjAwMDMgNi41ODQxNiA3LjUzNjEzIDYuNjIxMDlDNy40NTcxMyA2LjM1NDA5IDcuMzIwMzUgNi4wOTk2NSA3LjExMDM1IDUuODg5NjVDNi43ODY4MSA1LjU2NjM4IDYuMzQ3OTggNS4zODQ4OCA1Ljg5MDYyIDUuMzg0NzdDNS40MzMwOSA1LjM4NDc3IDQuOTkzNTcgNS41NjYyNSA0LjY2OTkyIDUuODg5NjVMMi4yMzA0NyA4LjMzMDA4QzEuOTA3NTggOC42NTM5NiAxLjcyNTYyIDkuMDkyNDggMS43MjU1OSA5LjU0OThDMS43MjU1OSAxMC4wMDcxIDEuOTA3NTkgMTAuNDQ1NiAyLjIzMDQ3IDEwLjc2OTVDMi41NTQzOCAxMS4wOTI0IDIuOTkyODIgMTEuMjc0NCAzLjQ1MDIgMTEuMjc0NEMzLjkwNzU3IDExLjI3NDQgNC4zNDYwMSAxMS4wOTI0IDQuNjY5OTIgMTAuNzY5NUw1LjUzODA5IDkuOTAyMzRDNS42OTYzNSA5Ljk2MzEgNS44NTgxNyAxMC4wMTIxIDYuMDIxNDggMTAuMDUzN0M2LjAwNzAzIDEwLjIwMDUgNiAxMC4zNDk0IDYgMTAuNUM2IDEwLjkyMDMgNi4wNTgyNCAxMS4zMjcgNi4xNjYwMiAxMS43MTI5TDUuODkwNjIgMTEuOTkwMkM1LjI0MzUgMTIuNjM3NCA0LjM2NTM3IDEzLjAwMSAzLjQ1MDIgMTMuMDAxQzIuNTM1MDIgMTMuMDAxIDEuNjU2ODkgMTIuNjM3NCAxLjAwOTc3IDExLjk5MDJDMC4zNjI2NzQgMTEuMzQzMSA2LjgxODRlLTA5IDEwLjQ2NSAwIDkuNTQ5OEMzLjIwNjQ4ZS0wNSA4LjYzNDg3IDAuMzYyOTMzIDcuNzU3NDEgMS4wMDk3NyA3LjExMDM1TDMuNDUwMiA0LjY2OTkyQzMuNzcwNSA0LjM0OTQ5IDQuMTUwNzkgNC4wOTUzNCA0LjU2OTM0IDMuOTIxODhDNC45ODggMy43NDg0MSA1LjQzNzQ1IDMuNjU5MTggNS44OTA2MiAzLjY1OTE4Wk01LjQ2Mzg3IDYuMzc3OTNDNS41NDI4NyA2LjY0NTkzIDUuNjc5NjMgNi44OTkzNSA1Ljg5MDYyIDcuMTEwMzVDNi4yMDAwNyA3LjQxODk4IDYuNjE0NSA3LjU5NjA5IDcuMDQ5OCA3LjYxMTMzQzYuNjYwOTMgOC4wNzUzIDYuMzYzNzIgOC42MTg2OSA2LjE4NjUyIDkuMjEzODdDNi4wNTIwNiA5LjE3NjQ5IDUuOTE5NTEgOS4xMzE3NSA1Ljc5MDA0IDkuMDc4MTJDNS4zNzEzOCA4LjkwNDY2IDQuOTkwMyA4LjY1MDU4IDQuNjY5OTIgOC4zMzAwOEM0LjQ2NjU1IDguMTIxMTkgNC4yOTEgNy44ODY5OSA0LjE0NjQ4IDcuNjMzNzlMNS4yODAyNyA2LjVDNS4zMzQyIDYuNDQ2MDcgNS4zOTk5NSA2LjQxNDg3IDUuNDYzODcgNi4zNzc5M1pNOS41NDk4IDBDMTAuNDY0OSA2LjgxODM2ZS0wOSAxMS4zNDMxIDAuMzYzNjU4IDExLjk5MDIgMS4wMTA3NEMxMi42Mzc0IDEuNjU3ODcgMTMuMDAxIDIuNTM1OTkgMTMuMDAxIDMuNDUxMTdDMTMuMDAwOSA0LjM2NjE5IDEyLjYzNzIgNS4yNDI1OSAxMS45OTAyIDUuODg5NjVMMTEuNzEyOSA2LjE2NjAyQzExLjMyNyA2LjA1ODI0IDEwLjkyMDMgNiAxMC41IDZDMTAuMDcyOSA2IDkuNjYwMDMgNi4wNjA3MSA5LjI2ODU1IDYuMTcxODhMMTAuNzcwNSA0LjY2OTkyQzExLjA5MzcgNC4zNDYzNSAxMS4yNzUzIDMuOTA3NTYgMTEuMjc1NCAzLjQ1MDJDMTEuMjc1NCAyLjk5MjY2IDExLjA5MzkgMi41NTMxNCAxMC43NzA1IDIuMjI5NDlDMTAuNDQ2NyAxLjkwNjM3IDEwLjAwNzIgMS43MjU1OSA5LjU0OTggMS43MjU1OUM5LjA5MjU3IDEuNzI1NjkgOC42NTM3NSAxLjkwNjUyIDguMzMwMDggMi4yMjk0OUw3LjQ2MTkxIDMuMDk4NjNDNi43NjE4NiAyLjgyOTQ4IDYuMDAzMzQgMi43NDc0MyA1LjI2MTcyIDIuODU5MzhMNy4xMTAzNSAxLjAxMDc0QzcuNzU3MzcgMC4zNjM4MTIgOC42MzQ4NSAwLjAwMDEwMjc1NSA5LjU0OTggMFoiIGZpbGw9IiM4MDg2OEUiLz4KPHBhdGggZD0iTTkuNDg4IDEyLjA5NkM5LjEzMzMzIDEyLjA5NiA4LjgxMDY3IDEyLjAyOTMgOC41MiAxMS44OTZDOC4yMjkzMyAxMS43NiA3Ljk5NzMzIDExLjU4NCA3LjgyNCAxMS4zNjhMOC40MzIgMTAuODE2QzguNTQ0IDEwLjkyOCA4LjY5MiAxMS4wMzYgOC44NzYgMTEuMTRDOS4wNiAxMS4yNDQgOS4yOCAxMS4yOTYgOS41MzYgMTEuMjk2QzkuNzIgMTEuMjk2IDkuODcyIDExLjI2NTMgOS45OTIgMTEuMjA0QzEwLjExNDcgMTEuMTQyNyAxMC4xNzYgMTEuMDQgMTAuMTc2IDEwLjg5NkMxMC4xNzYgMTAuODA1MyAxMC4xMzg3IDEwLjcyOCAxMC4wNjQgMTAuNjY0QzkuOTg5MzMgMTAuNTk3MyA5Ljg4IDEwLjUzMzMgOS43MzYgMTAuNDcyQzkuNTkyIDEwLjQxMDcgOS40MTYgMTAuMzQxMyA5LjIwOCAxMC4yNjRDOC45NDkzMyAxMC4xNjggOC43MjEzMyAxMC4wNjQgOC41MjQgOS45NTJDOC4zMjkzMyA5Ljg0IDguMTc3MzMgOS43MDQgOC4wNjggOS41NDRDNy45NTg2NyA5LjM4MTMzIDcuOTA0IDkuMTc4NjcgNy45MDQgOC45MzZDNy45MDQgOC42OTg2NyA3Ljk3MzMzIDguNDk3MzMgOC4xMTIgOC4zMzJDOC4yNTMzMyA4LjE2NCA4LjQ0MjY3IDguMDM2IDguNjggNy45NDhDOC45MiA3Ljg2IDkuMTg2NjcgNy44MTYgOS40OCA3LjgxNkM5LjgzMiA3LjgxNiAxMC4xMzQ3IDcuODc4NjcgMTAuMzg4IDguMDA0QzEwLjY0MTMgOC4xMjkzMyAxMC44NDggOC4yODI2NyAxMS4wMDggOC40NjRMMTAuMzg0IDguOTc2QzEwLjI4IDguODgyNjcgMTAuMTQ5MyA4LjggOS45OTIgOC43MjhDOS44MzQ2NyA4LjY1MzMzIDkuNjQgOC42MTYgOS40MDggOC42MTZDOS4yMzIgOC42MTYgOS4wODY2NyA4LjY0MjY3IDguOTcyIDguNjk2QzguODU3MzMgOC43NDkzMyA4LjggOC44MzQ2NyA4LjggOC45NTJDOC44IDkuMDM0NjcgOC44Mzg2NyA5LjEwOCA4LjkxNiA5LjE3MkM4Ljk5NiA5LjIzMzMzIDkuMTAyNjcgOS4yOTIgOS4yMzYgOS4zNDhDOS4zNjkzMyA5LjQwNCA5LjUxNzMzIDkuNDYxMzMgOS42OCA5LjUyQzkuOTE0NjcgOS42MDUzMyAxMC4xMzczIDkuNzAxMzMgMTAuMzQ4IDkuODA4QzEwLjU2MTMgOS45MTQ2NyAxMC43MzQ3IDEwLjA1MzMgMTAuODY4IDEwLjIyNEMxMS4wMDQgMTAuMzkyIDExLjA3MiAxMC42MTMzIDExLjA3MiAxMC44ODhDMTEuMDcyIDExLjI3MiAxMC45MjY3IDExLjU2OTMgMTAuNjM2IDExLjc4QzEwLjM0OCAxMS45OTA3IDkuOTY1MzMgMTIuMDk2IDkuNDg4IDEyLjA5NloiIGZpbGw9IiM4MDg2OEUiLz4KPC9nPgo8ZGVmcz4KPGNsaXBQYXRoIGlkPSJjbGlwMF8zNjRfMTYiPgo8cmVjdCB3aWR0aD0iMTMiIGhlaWdodD0iMTMiIGZpbGw9IndoaXRlIi8+CjwvY2xpcFBhdGg+CjwvZGVmcz4KPC9zdmc+Cg==";
 
-        setTimeout(function(){
-            popup.close();
-        }, 1500);
-    }});
+    // Prüfen ob die Buttons bereits existieren
+    if (_$(".ui-toolbar-markdown-copy-button").length || _$(".ui-toolbar-excel-copy-button").length) {
+        return;
+    }
+
+    // Markdown-Button erstellen
+    const $markdownButton = _$('<span>')
+        .addClass('ui-btn ui-btn-light-border ui-toolbar-markdown-copy-button')
+        .attr('title', 'Link als Markdown kopieren')
+        .css({
+            'background-image': `url(${markdownSvgBase64})`,
+            'background-repeat': 'no-repeat',
+            'background-position': 'center',
+            'background-size': '16px 16px',
+            'width': '32px',
+            'height': '32px',
+            'cursor': 'pointer',
+            'margin-right': '4px'
+        })
+        .bind("click", (ev) => {
+            copyToClipboard("[" + taskId + " - " + document.title.replace(/\[.*?\]/g, "").trim() + "](" + BX.util.remove_url_param(window.location.href, ["IFRAME", "IFRAME_TYPE"]) + ")", true);
+            ev.preventDefault();
+            ev.stopPropagation();
+            showCopyPopup(ev.target, "Markdown-Link kopiert!");
+        });
+
+    // Excel-Button erstellen
+    const $excelButton = _$('<span>')
+        .addClass('ui-btn ui-btn-light-border ui-toolbar-excel-copy-button')
+        .attr('title', 'Task-Daten für Excel kopieren')
+        .css({
+            'background-image': `url(${excelSvgBase64})`,
+            'background-repeat': 'no-repeat',
+            'background-position': 'center',
+            'background-size': '16px 16px',
+            'width': '32px',
+            'height': '32px',
+            'cursor': 'pointer',
+            'margin-right': '4px'
+        })
+        .bind("click", (ev) => {
+            copyTaskDataToClipboard();
+            ev.preventDefault();
+            ev.stopPropagation();
+            showCopyPopup(ev.target, "Task-Daten kopiert!");
+        });
+
+    // Buttons zur Toolbar hinzufügen
+    _$(".ui-toolbar-right-buttons").prepend($excelButton, $markdownButton);
+
+    // Optional: Behalte die ursprüngliche Shift+Click Funktionalität bei
+    _$(".ui-toolbar-copy-link-button").bind("click", (ev) => {
+        if (ev.shiftKey) {
+            copyToClipboard("[" + taskId + " - " + document.title.replace(/\[.*?\]/g, "").trim() + "](" + BX.util.remove_url_param(window.location.href, ["IFRAME", "IFRAME_TYPE"]) + ")", true);
+            ev.preventDefault();
+            ev.stopPropagation();
+            showCopyPopup(ev.target, "Markdown-Link kopiert!");
+        }
+    });
+}
+
+// Hilfsfunktion für Popup-Anzeige
+function showCopyPopup(target, message) {
+    var popupParams = {
+        content: message,
+        darkMode: true,
+        autoHide: true,
+        zIndex: 1000,
+        angle: true,
+        offsetLeft: 20,
+        bindOptions: {
+            position: 'top'
+        }
+    };
+    var popup = new BX.PopupWindow(
+        'my_tasks_clipboard_copy',
+        target,
+        popupParams
+    );
+    popup.show();
+    setTimeout(function(){
+        popup.close();
+    }, 1500);
+}
+
+// Funktion zum Kopieren der Task-Daten (basierend auf dem Google Sheets Script)
+function copyTaskDataToClipboard() {
+    var sideBarFieldVals = {},
+        crmFields = {},
+        taskDetails = {},
+        taskId = getTaskId(),
+        title = (_$(".ui-toolbar-title-item").text() || _$(".task-popup-pagetitle-item").text() || "").trim(),
+        hasAuftrag = _$(".field-item[data-id='D_2305'] a").length ? _$(".field-item[data-id='D_2305'] a") : null,
+        auftragsLink = hasAuftrag ? "https://bitrix.mobimedia.de" + _$(".field-item[data-id='D_2305'] a").attr("href") : null;
+
+    // Sammle alle Daten wie im ursprünglichen Script
+    _$(".task-detail-sidebar-item").each(function (idx, el) {
+        sideBarFieldVals[_$(el).find(".task-detail-sidebar-item-title").text().trim()] = _$(el).find(".task-detail-sidebar-item-value").text().trim();
+    });
+
+    _$(".field_crm .field_crm_entity_type").each(function (idx, el) {
+        crmFields[_$(el).text().trim()] = _$(el).next().text().trim();
+    });
+
+    _$(".task-detail-property-name").each(function (idx, el) {
+        taskDetails[_$(el).text().trim()] = _$(el).next().text().trim();
+    });
+
+
+
+    // Erstelle die Datenzeile (gleiche Reihenfolge wie addRow)
+    var rowData = [
+        `${taskId.replace(/#/, '')}`, // Aufgabennummer als Hyperlink
+        `=HYPERLINK("${BX.util.remove_url_param(window.location.href, ["IFRAME", "IFRAME_TYPE"])}","${title}")`, // Titel als Hyperlink
+        crmFields["Unternehmen:"] || "", // Kunde
+        auftragsLink ? `=HYPERLINK("${auftragsLink}","${(crmFields['Auftrag:'] || "").replaceAll('"', '""')}")` : "", // Auftrag als Hyperlink
+        (taskDetails["kalk. Std. Entwicklung"] || "0").replace(".", ","), // Stunden
+        sideBarFieldVals["Erstellt:"] || sideBarFieldVals["Ende:"] || sideBarFieldVals["Frist:"] || "", // Datum
+    ];
+
+    // Konvertiere Array zu Tab-getrenntem String für Excel
+    var excelData = rowData.join("\t");
+
+    // Kopiere in die Zwischenablage
+    copyToClipboard(excelData, true);
+}
+
+// Hilfsfunktion für Task-ID (aus dem ursprünglichen Script)
+function getTaskId(removeHash) {
+    const result = _$(".task-detail-subtitle-status").text().trim().match(/#\d+/)[0] || "";
+
+    if (!removeHash) {
+        return result;
+    }
+    return result.replace(/#/, '').toString();
 }
 
 function handleTags() {
