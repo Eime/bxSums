@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitrix-Sums
-// @version      2.40
+// @version      2.41
 // @description  Summiert Stunden und Story Points in Bitrix-Boards und Sprints (mit Rest-Tags Unterstützung)
 // @author       Michael E.
 // @updateURL    https://eime.github.io/bxSums/bxSums.meta.js
@@ -252,7 +252,7 @@ function processTags(selector, parentSelector) {
 
         tags.forEach(tag => {
             $tags.append(_$("<span>").addClass(tag.toLowerCase()).text(tag));
-            $el.html($el.html().replace("[" + tag + "]", ""));
+            $el.html($el.html().replace("[" + tag + "]", tag === tags[tags.length-1] ? " " : ""));
         });
 
         if (parentSelector) {
